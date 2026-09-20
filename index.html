@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent; width: 100vw; height: 100vh; position: relative; }
+        #media-container { 
+            position: absolute; display: flex; align-items: center; justify-content: center; 
+            opacity: 0; transition: opacity 0.5s ease-in-out; pointer-events: none; box-sizing: border-box;
+            overflow: hidden;
+        }
+        #media-container.visible { opacity: 1; }
+        #status-dot { position: absolute; top: 5px; left: 5px; width: 8px; height: 8px; border-radius: 50%; background: red; opacity: 0.5; z-index: 9999; }
+    </style>
+</head>
+<body>
+    <div id="status-dot"></div>
+    <div id="media-container"></div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const channel = urlParams.get('channel');
+        const key = urlParams.get('key');
+
+        if (!channel || !key) {
+            document.body.innerHTML = '<h1 style="color:red; text-align:center; font-family:sans-serif; margin-top:20%; text-shadow: 1px 1px 2px black;">❌ Ошибка: Укажите ?channel=...&key=... в ссылке</h1>';
+            throw new Error("Missing parameters");
+        }
+
+        const wsUrl = `wss://bot.mickeyisdev.ru/ws/obs/${channel}?key=${key}`;
+        
+        let ws;
+        let hideTimeout;
+        const container = document.getElementById('media-container');
+        const dot = document.getElementById('status-dot');
+
+        function hideMedia() {
+            container.classList.remove('visible');
+            setTimeout(() => { container.innerHTML = ''; }, 500);
+        }
+
+        function connect() {
+            ws = new WebSocket(wsUrl);
+            ws.onopen = () => { dot.style.background = 'lime'; };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.action === 'show') {
+                    clearTimeout(hideTimeout);
+                    const url = data.url;
+                    
+                    container.style.left = data.x + '%';
+                    container.style.top = data.y + '%';
+                    container.style.width = data.w + '%';
+                    container.style.height = data.h + '%';
+                    container.style.clipPath = data.clip || 'none';
+                    
+                    const zoom = data.zoom !== undefined ? data.zoom : 100;
+                    const rot = data.rotation !== undefined ? data.rotation : 0;
+                    const scaleStyle = `transform: rotate(${rot}deg) scale(${zoom / 100}); width: 100%; height: 100%; object-fit: contain; border: none;`;
+                    
+                    let startParam = "";
+                    const timeMatch = url.match(/(?:t|start)=([\dhm]+)/);
+                    if (timeMatch) {
+                        let tStr = timeMatch[1];
+                        let total = 0;
+                        const h = tStr.match(/(\d+)h/);
+                        const m = tStr.match(/(\d+)m/);
+                        const s = tStr.match(/(\d+)s/);
+                        if (h) total += parseInt(h[1]) * 3600;
+                        if (m) total += parseInt(m[1]) * 60;
+                        if (s) total += parseInt(s[1]);
+                        if (!h && !m && !s) total = parseInt(tStr);
+                        if (!isNaN(total)) startParam = `&start=${total}`;
+                    }
+
+                    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))((\w|-){11})/);
+                    const tiktokMatch = url.match(/tiktok\.com\/.*video\/(\d+)/);
+
+                    if (ytMatch && ytMatch[1]) {
+                        container.innerHTML = `<iframe style="${scaleStyle}" src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&controls=0&modestbranding=1${startParam}" allow="autoplay; encrypted-media"></iframe>`;
+                    } else if (tiktokMatch && tiktokMatch[1]) {
+                        container.innerHTML = `<iframe style="${scaleStyle}" src="https://www.tiktok.com/embed/v2/${tiktokMatch[1]}?autoplay=1" allow="autoplay; encrypted-media"></iframe>`;
+                    } else if (url.match(/\.(mp3|wav|flac)(\?.*)?$/i)) {
+                        container.innerHTML = `<audio src="${url}" autoplay></audio>`;
+                    } else if (url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
+                        container.innerHTML = `<video style="${scaleStyle}" src="${url}" autoplay loop></video>`;
+                    } else {
+                        container.innerHTML = `<img style="${scaleStyle}" src="${url}">`;
+                    }
+                    
+                    const mediaEl = container.querySelector('video, audio');
+                    if (mediaEl) mediaEl.volume = data.volume !== undefined ? data.volume : 0.5;
+                    
+                    setTimeout(() => container.classList.add('visible'), 50);
+                    
+                    if (data.duration > 0) {
+                        hideTimeout = setTimeout(hideMedia, data.duration * 1000);
+                    }
+                } else if (data.action === 'hide') {
+                    clearTimeout(hideTimeout);
+                    hideMedia();
+                }
+            };
+            ws.onclose = () => {
+                dot.style.background = 'red';
+                setTimeout(connect, 2000);
+            };
+        }
+        connect();
+    </script>
+</body>
+</html>
