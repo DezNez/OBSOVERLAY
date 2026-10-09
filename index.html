@@ -92,7 +92,7 @@
                     const mediaEl = container.querySelector('video, audio');
                     if (mediaEl) mediaEl.volume = data.volume !== undefined ? data.volume : 0.5;
                     
-                    setTimeout(() => container.classList.add('visible'), 50);
+                    setTimeout(() => container.classList.add('visible'), 800);
                     
                     if (data.duration > 0) {
                         hideTimeout = setTimeout(hideMedia, data.duration * 1000);
