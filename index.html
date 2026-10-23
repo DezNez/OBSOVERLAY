@@ -10,7 +10,7 @@
             overflow: hidden;
         }
         #media-container.visible { opacity: 1; }
-        #status-dot { position: absolute; top: 5px; left: 5px; width: 8px; height: 8px; border-radius: 50%; background: red; opacity: 0.5; z-index: 9999; }
+        #status-dot { position: absolute; top: 5px; left: 5px; width: 8px; height: 8px; border-radius: 50%; background: red; opacity: 0.5; z-index: 9999; transition: opacity 0.3s; }
     </style>
 </head>
 <body>
@@ -44,6 +44,11 @@
             ws.onopen = () => { dot.style.background = 'lime'; };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                
+                if (data.action === 'toggle_dot') {
+                    dot.style.opacity = data.show ? '0.5' : '0';
+                    return;
+                }
                 
                 if (data.action === 'show') {
                     clearTimeout(hideTimeout);
