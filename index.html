@@ -51,7 +51,6 @@
                 if (data.action === 'audio_load') {
                     audio.src = data.url;
                     audio.volume = data.volume;
-                    audio.play();
                     return;
                 } else if (data.action === 'audio_play') {
                     audio.play(); return;
