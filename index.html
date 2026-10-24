@@ -15,6 +15,7 @@
 </head>
 <body>
     <div id="status-dot"></div>
+    <audio id="bg-audio"></audio>
     <div id="media-container"></div>
 
     <script>
@@ -42,8 +43,27 @@
         function connect() {
             ws = new WebSocket(wsUrl);
             ws.onopen = () => { dot.style.background = 'lime'; };
-            ws.onmessage = (event) => {
+             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                const audio = document.getElementById('bg-audio');
+                
+                // --- НОВОЕ: Обработка Аудиоплеера ---
+                if (data.action === 'audio_load') {
+                    audio.src = data.url;
+                    audio.volume = data.volume;
+                    audio.play();
+                    return;
+                } else if (data.action === 'audio_play') {
+                    audio.play(); return;
+                } else if (data.action === 'audio_pause') {
+                    audio.pause(); return;
+                } else if (data.action === 'audio_seek') {
+                    audio.currentTime = data.time; return;
+                } else if (data.action === 'audio_volume') {
+                    audio.volume = data.volume; return;
+                } else if (data.action === 'audio_stop') {
+                    audio.pause(); audio.src = ''; return;
+                }
                 
                 if (data.action === 'toggle_dot') {
                     dot.style.opacity = data.show ? '0.5' : '0';
