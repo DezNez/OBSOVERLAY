@@ -11,14 +11,33 @@
         }
         #media-container.visible { opacity: 1; }
         #status-dot { position: absolute; top: 5px; left: 5px; width: 8px; height: 8px; border-radius: 50%; background: red; opacity: 0.5; z-index: 9999; transition: opacity 0.3s; }
+        
+        /* НОВОЕ: Жесткий дебаг-контейнер для клипа */
+        #clip-container {
+            position: absolute; 
+            bottom: 40px; 
+            left: 40px; 
+            width: 320px; 
+            aspect-ratio: 16/9; 
+            background: rgba(0,0,0,0.8); 
+            border: 2px dashed #1f93fb; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0; 
+            transition: opacity 0.3s ease; 
+            z-index: 50;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
     <div id="status-dot"></div>
     
-    <!-- ИЗМЕНЕНО: Добавлен background: #000 -->
-    <div id="clip-container" style="position: absolute; top: 10%; left: 10%; width: 30%; aspect-ratio: 16/9; opacity: 0; transition: opacity 0.3s ease; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: none; background: #000;">
-        <video id="bg-audio" style="width: 100%; height: 100%; object-fit: cover;"></video>
+    <div id="clip-container">
+        <span style="color: #1f93fb; font-family: sans-serif; font-weight: bold; font-size: 20px; z-index: 2;">🎵 КЛИП</span>
+        <video id="bg-audio" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;"></video>
     </div>
     
     <div id="media-container"></div>
@@ -72,7 +91,7 @@
                     audio.pause(); 
                     audio.src = ''; 
                     document.getElementById('clip-container').style.opacity = '0';
-                    if (data.action === 'audio_stop_all') hideMedia(); // Тотальная очистка
+                    if (data.action === 'audio_stop_all') hideMedia();
                     return;
                 }
                 
