@@ -1,3 +1,4 @@
+<!-- index.html — замени блок <style> и скрипт обработки сообщений -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,23 +13,17 @@
         #media-container.visible { opacity: 1; }
         #status-dot { position: absolute; top: 5px; left: 5px; width: 8px; height: 8px; border-radius: 50%; background: red; opacity: 0.5; z-index: 9999; transition: opacity 0.3s; }
         
-        /* НОВОЕ: Жесткий дебаг-контейнер для клипа */
+        /* ИЗМЕНЕНО: Убрали рамку и текст, оставили чистый контейнер */
         #clip-container {
             position: absolute; 
-            bottom: 40px; 
-            left: 40px; 
-            width: 320px; 
-            aspect-ratio: 16/9; 
-            background: rgba(0,0,0,0.8); 
-            border: 2px dashed #1f93fb; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
             opacity: 0; 
             transition: opacity 0.3s ease; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            pointer-events: none; 
+            background: #000;
             z-index: 50;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
     </style>
 </head>
@@ -36,8 +31,7 @@
     <div id="status-dot"></div>
     
     <div id="clip-container">
-        <span style="color: #1f93fb; font-family: sans-serif; font-weight: bold; font-size: 20px; z-index: 2;">🎵 КЛИП</span>
-        <video id="bg-audio" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5;"></video>
+        <video id="bg-audio" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></video>
     </div>
     
     <div id="media-container"></div>
@@ -70,10 +64,25 @@
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 const audio = document.getElementById('bg-audio');
+                const clipContainer = document.getElementById('clip-container');
                 
                 // --- Обработка Аудиоплеера и Клипов ---
                 if (data.action === 'audio_toggle_clip') {
-                    document.getElementById('clip-container').style.opacity = data.show ? '1' : '0';
+                    clipContainer.style.opacity = data.show ? '1' : '0';
+                    if (data.show) {
+                        clipContainer.style.left = data.x + '%';
+                        clipContainer.style.top = data.y + '%';
+                        clipContainer.style.width = data.w + '%';
+                        clipContainer.style.height = data.h + '%';
+                        clipContainer.style.transform = `rotate(${data.rotation || 0}deg)`;
+                    }
+                    return;
+                } else if (data.action === 'audio_clip_move') {
+                    clipContainer.style.left = data.x + '%';
+                    clipContainer.style.top = data.y + '%';
+                    clipContainer.style.width = data.w + '%';
+                    clipContainer.style.height = data.h + '%';
+                    clipContainer.style.transform = `rotate(${data.rotation || 0}deg)`;
                     return;
                 } else if (data.action === 'audio_load') {
                     audio.src = data.url;
@@ -90,7 +99,7 @@
                 } else if (data.action === 'audio_stop' || data.action === 'audio_stop_all') {
                     audio.pause(); 
                     audio.src = ''; 
-                    document.getElementById('clip-container').style.opacity = '0';
+                    clipContainer.style.opacity = '0';
                     if (data.action === 'audio_stop_all') hideMedia();
                     return;
                 }
@@ -100,6 +109,7 @@
                     return;
                 }
                 
+                // ... (дальше идет старый код обработки show/hide для медиа)
                 if (data.action === 'show') {
                     clearTimeout(hideTimeout);
                     const url = data.url;
