@@ -23,13 +23,20 @@
             background: #000;
             z-index: 50;
         }
+        #bg-audio {
+            position: absolute; 
+            inset: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
     <div id="status-dot"></div>
     
     <div id="clip-container">
-        <video id="bg-audio" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"></video>
+        <video id="bg-audio"></video>
     </div>
     
     <div id="media-container"></div>
