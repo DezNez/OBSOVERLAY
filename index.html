@@ -115,7 +115,19 @@
                 
                 if (data.action === 'show') {
                     clearTimeout(hideTimeout);
-                    const url = data.url;
+                    let url = data.url;
+                    
+                    // --- ЖЕЛЕЗОБЕТОННЫЙ ФИКС ПУТЕЙ ---
+                    if (!url.startsWith('http')) {
+                        if (url.startsWith('/uploads/')) {
+                            url = 'https://bot.mickeyisdev.ru' + url;
+                        } else {
+                            url = 'https://bot.mickeyisdev.ru/uploads/' + url;
+                        }
+                    }
+                    // ---------------------------------
+                    
+                    container.style.left = data.x + '%';
                     
                     container.style.left = data.x + '%';
                     container.style.top = data.y + '%';
